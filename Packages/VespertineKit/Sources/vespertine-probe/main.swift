@@ -376,12 +376,18 @@ if args.count >= 3, args[1] == "doptest" {
     engine.pause(); pump(0.2)
     var waited = 0
     while engine.snapshot.state != .paused, waited < 300 { pump(0.1); waited += 1 }
-    pump(min(5, release / 2))
-    expectRunning(true, "still within the release time")
-    pump(release - min(5, release / 2) + 4)
-    let owner = readback(device.id).hogPID
-    note("hog: \(owner == getpid() ? "us" : owner == -1 ? "none" : String(owner)) (expected none: let go after \(Int(release)) s) · \(state())")
-    if owner == getpid() { failures.append("still holding the device \(Int(release) + 4) s into a pause") }
+    if engine.snapshot.state != .paused {
+        // Without the pause there's no release to time: say so instead of checking against the wrong moment.
+        note("the pause didn't take effect within 30 s · \(state())")
+        failures.append("the pause didn't take effect within 30 s")
+    } else {
+        pump(min(5, release / 2))
+        expectRunning(true, "still within the release time")
+        pump(release - min(5, release / 2) + 4)
+        let owner = readback(device.id).hogPID
+        note("hog: \(owner == getpid() ? "us" : owner == -1 ? "none" : String(owner)) (expected none: let go after \(Int(release)) s) · \(state())")
+        if owner == getpid() { failures.append("still holding the device \(Int(release) + 4) s into a pause") }
+    }
     engine.resume()
     pump(3)
     note(state())
