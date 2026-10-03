@@ -662,7 +662,8 @@ public final class PlaybackEngine: @unchecked Sendable {
                 offset = 0
             }
         }
-        teardown(releaseHog: true)
+        // Nothing left that would play: done with the device.
+        teardown(releaseHog: true, idle: true)
         state = .stopped
     }
 

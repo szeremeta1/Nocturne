@@ -324,6 +324,11 @@ if args.count >= 3, args[1] == "doptest" {
     let rateBefore = readback(device.id).rate
     func expectRateBack(_ rate: Double, _ when: String) {
         note("device rate: \(SampleRate.format(rate)) kHz (expected \(SampleRate.format(rateBefore)) kHz, as before DoP: \(when))")
+        // A failed read gives 0 on both sides, which would match: a rate has to be read to count.
+        guard rate.isFinite, rate > 0, rateBefore.isFinite, rateBefore > 0 else {
+            failures.append("\(when): the device's rate couldn't be read (\(rateBefore) before, \(rate) now)")
+            return
+        }
         if abs(rate - rateBefore) >= 0.5 {
             failures.append("\(when): the device was left at \(SampleRate.format(rate)) kHz, not \(SampleRate.format(rateBefore)) kHz")
         }
