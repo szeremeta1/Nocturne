@@ -165,9 +165,11 @@ if $install; then
   running() { [[ $(osascript -e 'application id "org.szeremeta.Vespertine" is running' 2>/dev/null) == true ]] }
   if running; then
     print "Quitting Vespertine…"
-    osascript -e 'tell application id "org.szeremeta.Vespertine" to quit' >/dev/null 2>&1 || true
+    # Without waiting for a reply: an app that hangs would hold osascript for its two-minute timeout.
+    osascript -e 'ignoring application responses' -e 'tell application id "org.szeremeta.Vespertine" to quit' \
+      -e 'end ignoring' >/dev/null 2>&1 || true
     for _ in {1..30}; do running || break; sleep 0.5; done
-    pkill -f '^/Applications/Vespertine.app/Contents/MacOS/Vespertine' 2>/dev/null || true
+    pkill -f '^/Applications/Vespertine\.app/Contents/MacOS/Vespertine( |$)' 2>/dev/null || true
   fi
   staged_install="/Applications/.Vespertine-install-$$.app"
   ditto "$app" "$staged_install"
